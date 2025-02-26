@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.jetbrains.kotlin.jvm)
     alias(libs.plugins.dokka)
     `maven-publish`
+    signing
 }
 
 java {
@@ -81,7 +82,20 @@ val javadocJar by tasks.registering(Jar::class) {
     from(dokkaPath)
 }
 
+signing {
+    val signingKeyId: String by properties
+    val signingKey: String by properties
+    val signingPassword: String by properties
+    useInMemoryPgpKeys(signingKeyId, signingKey, signingPassword)
+    sign(publishing.publications)
+}
+
 publishing {
+    repositories {
+        maven {
+            url = uri(layout.buildDirectory.dir("maven"))
+        }
+    }
     publications {
         create<MavenPublication>("release") {
             groupId = "com.uandcode"
