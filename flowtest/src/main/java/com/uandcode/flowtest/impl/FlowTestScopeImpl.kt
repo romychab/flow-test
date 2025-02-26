@@ -1,7 +1,9 @@
 package com.uandcode.flowtest.impl
 
+import com.uandcode.flowtest.BackgroundCoroutineState
 import com.uandcode.flowtest.CollectStatus
 import com.uandcode.flowtest.FlowTestScope
+import com.uandcode.flowtest.JobStatus
 import com.uandcode.flowtest.TestFlowCollector
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
@@ -29,6 +31,27 @@ internal class FlowTestScopeImpl(
             }
         }
         return TestFlowCollectorImpl(job, collectorState)
+    }
+
+    override fun <T> executeInBackground(
+        context: CoroutineContext,
+        command: suspend () -> T
+    ): BackgroundCoroutineState<T> {
+        var status: JobStatus<T> = JobStatus.Executing
+        val job = scope.backgroundScope.launch(context) {
+            try {
+                val result = command()
+                status = JobStatus.Completed(result)
+            } catch (e: CancellationException) {
+                status = JobStatus.Cancelled
+            } catch (e: Exception) {
+                status = JobStatus.Failed(e)
+            }
+        }
+        return BackgroundCoroutineStateImpl(
+            statusGetter = { status },
+            job = job,
+        )
     }
 
 }

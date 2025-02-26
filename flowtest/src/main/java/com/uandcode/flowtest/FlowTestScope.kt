@@ -32,6 +32,16 @@ public interface FlowTestScope {
     ): TestFlowCollector<T>
 
     /**
+     * Execute a [command] in the backgroundScope.
+     * @return BackgroundCoroutineState instance which can be used for asserting
+     *         the current state of the coroutine execution
+     */
+    public fun <T> executeInBackground(
+        context: CoroutineContext = UnconfinedTestDispatcher(scope.testScheduler),
+        command: suspend () -> T,
+    ): BackgroundCoroutineState<T>
+
+    /**
      * @see [TestScope.advanceUntilIdle]
      */
     public fun advanceUntilIdle(): Unit = scope.advanceUntilIdle()
